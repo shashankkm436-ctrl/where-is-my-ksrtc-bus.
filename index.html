@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>KSRTC Namma Bus Live</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+:root {
+  --bg: #030817;
+  --panel: #071126;
+  --panel2: #0c1930;
+  --border: #172541;
+  --text: #f3f6ff;
+  --muted: #8d9bb4;
+  --red: #ff1538;
+  --green: #00d6a0;
+  --yellow: #ffcc55;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #050a19;
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar {
+  max-width: 1450px;
+  margin: auto;
+  padding: 17px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.brand-icon {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  background: var(--red);
+  border-radius: 11px;
+  font-size: 21px;
+}
+
+.brand small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+  margin-top: 4px;
+}
+
+nav {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+nav button {
+  background: transparent;
+  color: #9da9c1;
+  border: 0;
+  padding: 11px 9px;
+  border-radius: 7px;
+}
+
+nav button:hover,
+nav button.active {
+  background: #151d33;
+  color: var(--red);
+}
+
+.sos {
+  background: var(--red);
+  color: white;
+  border: 0;
+  padding: 10px 13px;
+  border-radius: 7px;
+  font-weight: 700;
+}
+
+.container {
+  max-width: 1450px;
+  margin: auto;
+  padding: 16px 20px 40px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 19px;
+  overflow: hidden;
+}
+
+.hero {
+  min-height: 290px;
+  position: relative;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background:
+    linear-gradient(0deg, #030817 0%, rgba(3,8,23,.90) 17%,
+    rgba(3,8,23,.40) 72%, rgba(3,8,23,.25) 100%),
+    url("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1800&q=80")
+    center 45% / cover;
+}
+
+.eyebrow {
+  color: #ff6b7e;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.hero h1 {
+  font-size: clamp(27px, 4vw, 43px);
+  line-height: 1.17;
+  max-width: 730px;
+  margin-bottom: 12px;
+}
+
+.hero p {
+  color: #c0c9da;
+  line-height: 1.7;
+  max-width: 720px;
+}
+
+.search-area {
+  padding: 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.tab {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel2);
+  color: #aab5cb;
+  padding: 10px 13px;
+}
+
+.tab.active {
+  background: var(--red);
+  border-color: var(--red);
+  color: white;
+}
+
+.search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+}
+
+input, select {
+  background: #101c32;
+  border: 1px solid #24324c;
+  color: white;
+  padding: 13px;
+  border-radius: 7px;
+  min-width: 0;
+  width: 100%;
+}
+
+input::placeholder {
+  color: #8190aa;
+}
+
+.primary {
+  background: var(--red);
+  color: white;
+  border: 0;
+  border-radius: 7px;
+  padding: 12px 19px;
+  font-weight: 700;
+}
+
+.primary:hover,
+.sos:hover {
+  background: #d90b2a;
+}
+
+.quick-label {
+  color: var(--muted);
+  margin: 15px 0 9px;
+  font-size: 11px;
+}
+
+.quick-buses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.quick-buses button {
+  background: #111e35;
+  border: 1px solid #1f304d;
+  color: #d4dbea;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 11px;
+}
+
+.quick-buses button:hover {
+  border-color: var(--red);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 17px;
+}
+
+.stat span {
+  color: var(--muted);
+  font-size: 11px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.stat strong {
+  font-size: 17px;
+}
+
+.green {
+  color: var(--green);
+}
+
+.yellow {
+  color: var(--yellow);
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin: 25px 0 13px;
+}
+
+.section-heading h2 {
+  font-size: 19px;
+}
+
+.section-heading p {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--red);
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.bus-card {
+  padding: 17px;
+}
+
+.bus-header {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 15px;
+}
+
+.bus-identity {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.bus-picture {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #291327;
+  border: 1px solid #64243b;
+  font-size: 24px;
+}
+
+.bus-identity h3 {
+  font-size: 15px;
+  margin-bottom: 5px;
+}
+
+.bus-identity p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 7px;
+  background: #352c15;
+  color: var(--yellow);
+  border: 1px solid #514321;
+  border-radius: 5px;
+  font-size: 10px;
+}
+
+.status {
+  background: #062e29;
+  color: var(--green);
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.bus-details {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 15px 0;
+}
+
+.bus-details span {
+  color: #c4cde0;
+}
+
+.bus-details strong {
+  color: var(--yellow);
+}
+
+.map-wrap {
+  position: relative;
+  border: 1px solid #20314e;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#map {
+  height: 390px;
+  width: 100%;
+  background: #101b2d;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 500;
+  background: rgba(3, 8, 23, .93);
+  border: 1px solid #26344d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  line-height: 1.8;
+}
+
+.map-overlay small {
+  color: var(--muted);
+  display: block;
+}
+
+.bus-map-icon {
+  font-size: 24px;
+  width: 38px;
+  height: 38px;
+  background: var(--red);
+  border: 3px solid white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 15px rgba(255,21,56,.7);
+}
+
+.map-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px;
+  color: #c4cde0;
+  background: #081329;
+  font-size: 11px;
+}
+
+.map-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-legend i {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.progress-area {
+  margin-top: 17px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  font-size: 11px;
+}
+
+.progress-track {
+  background: #1a2941;
+  height: 7px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--red), var(--green));
+  width: 0;
+  height: 100%;
+  transition: width .5s;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.control-row button {
+  background: #12203a;
+  color: white;
+  border: 1px solid #293a58;
+  padding: 9px 12px;
+  border-radius: 6px;
+}
+
+.control-row button:hover {
+  border-color: var(--green);
+}
+
+.control-row button.active {
+  background: #075040;
+  border-color: var(--green);
+}
+
+.control-note {
+  color: var(--muted);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.itinerary {
+  padding: 20px;
+}
+
+.itinerary-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+.itinerary-header p {
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.stop {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #142039;
+}
+
+.stop-icon {
+  height: 15px;
+  width: 15px;
+  border: 2px solid var(--green);
+  border-radius: 50%;
+  margin-top: 3px;
+  position: relative;
+}
+
+.stop:not(:last-child) .stop-icon::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 4px;
+  height: 53px;
+  width: 2px;
+  background: #174a44;
+}
+
+.stop.current .stop-icon {
+  background: var(--red);
+  border-color: #ff7489;
+}
+
+.stop h4 {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.stop p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.stop-time {
+  text-align: right;
+  min-width: 75px;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.stop-time span {
+  color: var(--muted);
+  display: block;
+}
+
+.platform {
+  background: #17243a;
+  color: var(--yellow);
+  border-radius: 4px;
+  padding: 4px 6px;
+  display: inline-block;
+}
+
+.footer {
+  color: var(--muted);
+  text-align: center;
+  padding: 25px 10px;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  background: #10213a;
+  border: 1px solid #2d4565;
+  padding: 13px 18px;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px #0008;
+  display: none;
+  max-width: 90%;
+}
+
+@media (min-width: 1100px) {
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 750px) {
+  .topbar {
+    padding: 12px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  nav {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 3px;
+  }
+
+  nav button {
+    flex-shrink: 0;
+    font-size: 11px;
+  }
+
+  .container {
+    padding: 10px 10px 30px;
+  }
+
+  .hero {
+    padding: 22px 17px;
+    min-height: 270px;
+  }
+
+  .hero h1 {
+    font-size: 29px;
+  }
+
+  .search-area {
+    padding: 13px;
+  }
+
+  .search-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat strong {
+    font-size: 15px;
+  }
+
+  #map {
+    height: 330px;
+  }
+
+  .bus-card {
+    padding: 12px;
+  }
+
+  .stop {
+    grid-template-columns: 18px 1fr auto;
+    gap: 8px;
+  }
+
+  .stop-time {
+    min-width: 62px;
+  }
+
+  .control-note {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="topbar">
+
+    <div class="brand">
+      <div class="brand-icon">🚌</div>
+      <div>
+        KSRTC · Namma Bus Live
+        <small>Sarathi Real-Time GPS Tracking</small>
+      </div>
+    </div>
+
+    <nav>
+      <button class="active" onclick="goTo('tracker')">Live Bus Tracker</button>
+      <button onclick="goTo('itinerary')">Terminal Boards</button>
+      <button onclick="goTo('search')">Karnataka Places</button>
+      <button onclick="goTo('itinerary')">Route Timetable</button>
+      <button onclick="goTo('fleet')">Fleet & Classes</button>
+      <button onclick="goTo('support')">Passenger Support</button>
+      <button class="sos" onclick="showSOS()">SOS & Help</button>
+    </nav>
+
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="panel">
+
+    <div class="hero">
+      <div class="eyebrow">● SARATHI REAL-TIME GPS NETWORK</div>
+      <h1>Where Is My Bus? Track KSRTC in Real-Time</h1>
+      <p>
+        Explore bus routes, intermediate stops, estimated arrival times,
+        speed, route progress and terminal information across Karnataka.
+      </p>
+    </div>
+
+    <div class="search-area" id="search">
+
+      <div class="tabs">
+        <button class="tab active" onclick="setSearchMode('bus',this)">
+          🚌 Bus / Vehicle No.
+        </button>
+        <button class="tab" onclick="setSearchMode('route',this)">
+          ⇄ Search by Route
+        </button>
+      </div>
+
+      <div class="search-grid" id="busSearch">
+        <input id="busInput"
+          placeholder="Enter bus registration or service number"
+          value="KA-09-F-5421">
+
+        <select id="routeSelect" aria-label="Select route">
+          <option value="hassan">Hassan → Bengaluru</option>
+          <option value="mysuru">Mysuru → Bengaluru</option>
+          <option value="mangaluru">Mangaluru → Bengaluru</option>
+          <option value="hubballi">Hubballi → Bengaluru</option>
+          <option value="madikeri">Madikeri → Mysuru</option>
+          <option value="tirupati">Bengaluru → Tirupati</option>
+          <option value="shivamogga">Shivamogga → Bengaluru</option>
+          <option value="belagavi">Belagavi → Bengaluru</option>
+        </select>
+
+        <button class="primary" onclick="trackBus()">Track Bus Live →</button>
+      </div>
+
+      <div id="routeSearch" style="display:none">
+        <div class="search-grid">
+          <select id="originSelect" aria-label="Origin">
+            <option>Hassan</option>
+            <option>Mysuru</option>
+            <option>Bengaluru</option>
+            <option>Mangaluru</option>
+            <option>Hubballi</option>
+            <option>Shivamogga</option>
+            <option>Belagavi</option>
+            <option>Madikeri</option>
+          </select>
+
+          <select id="destinationSelect" aria-label="Destination">
+            <option>Bengaluru</option>
+            <option>Hassan</option>
+            <option>Mysuru</option>
+            <option>Mangaluru</option>
+            <option>Hubballi</option>
+            <option>Shivamogga</option>
+            <option>Belagavi</option>
+            <option>Madikeri</option>
+          </select>
+
+          <button class="primary" onclick="searchRoute()">
+            Find Route →
+          </button>
+        </div>
+      </div>
+
+      <div class="quick-label">Quick Live Buses · Demo Services</div>
+
+      <div class="quick-buses">
+        <button onclick="quickBus('KA-09-F-5421','hassan')">
+          KA-09-F-5421 · Airavat Club Class
+        </button>
+        <button onclick="quickBus('KA-19-F-3312','mangaluru')">
+          KA-19-F-3312 · Ambaari Utsav
+        </button>
+        <button onclick="quickBus('KA-01-F-8841','mysuru')">
+          KA-01-F-8841 · Flybus
+        </button>
+        <button onclick="quickBus('KA-25-F-7744','hubballi')">
+          KA-25-F-7744 · Rajahamsa
+        </button>
+        <button onclick="quickBus('KA-07-F-2289','tirupati')">
+          KA-07-F-2289 · Karnataka Sarige
+        </button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span>Demo GPS Buses</span>
+          <strong>8,450+</strong>
+        </div>
+        <div class="stat">
+          <span>On-Time Reliability</span>
+          <strong class="green">98.2%</strong>
+        </div>
+        <div class="stat">
+          <span>Operating Depots</span>
+          <strong>84 Depots</strong>
+        </div>
+        <div class="stat">
+          <span>Control Room</span>
+          <strong class="yellow">080-49596666</strong>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="section-heading" id="tracker">
+    <div>
+      <h2><span class="live-dot"></span>Live GPS Vehicle Tracking Cockpit</h2>
+      <p id="trackingDescription">
+        Demonstration GPS simulation for the selected route.
+      </p>
+    </div>
+
+    <select id="busSelector" style="max-width:270px"
+      onchange="selectBus(this.value)" aria-label="Choose a bus">
+      <option value="hassan">KA-09-F-5421 · Hassan route</option>
+      <option value="mysuru">KA-01-F-8841 · Mysuru route</option>
+      <option value="mangaluru">KA-19-F-3312 · Mangaluru route</option>
+      <option value="hubballi">KA-25-F-7744 · Hubballi route</option>
+      <option value="tirupati">KA-07-F-2289 · Tirupati route</option>
+      <option value="shivamogga">KA-14-F-1130 · Shivamogga route</option>
+      <option value="madikeri">KA-12-F-1190 · Madikeri route</option>
+      <option value="belagavi">KA-22-F-2250 · Belagavi route</option>
+    </select>
+  </div>
+
+  <section class="panel bus-card">
+
+    <div class="bus-header">
+      <div class="bus-identity">
+        <div class="bus-picture">🚌</div>
+        <div>
+          <h3 id="busNumber">KA-09-F-5421 <span class="badge">Airavat Club Class</span></h3>
+          <p id="busRouteName">Hassan → Bengaluru · Demo service</p>
+        </div>
+      </div>
+      <div class="status">● Demo tracking active</div>
+    </div>
+
+    <div class="bus-details">
+      <span>Next Stop: <strong id="nextStop">Kunigal</strong></span>
+      <span>Speed: <strong id="speed">55 km/h</strong></span>
+      <span>ETA: <strong id="eta">Calculating...</strong></span>
+      <span>GPS: <strong class="green">Simulation</strong></span>
+    </div>
+
+    <div class="map-wrap">
+      <div id="map" aria-label="Interactive bus route map"></div>
+
+      <div class="map-overlay">
+        <strong id="mapBusTitle">🚌 KA-09-F-5421</strong>
+        <small id="mapRouteTitle">Hassan → Bengaluru</small>
+        <small id="mapPosition">Loading route...</small>
+      </div>
+    </div>
+
+    <div class="map-legend">
+      <span><i></i> Completed route</span>
+      <span><i style="background:#66758c"></i> Remaining route</span>
+      <span>🚌 Bus position</span>
+      <span>📍 Bus stops</span>
+    </div>
+
+    <div class="progress-area">
+      <div class="progress-label">
+        <span>Trip Progress</span>
+        <strong id="progressText">0%</strong>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="bus-details" style="margin-bottom:0">
+        <span>Covered: <strong id="covered">0 km</strong></span>
+        <span>Remaining: <strong id="remaining">0 km</strong></span>
+        <span>Distance: <strong id="totalDistance">0 km</strong></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <button id="pauseBtn" onclick="togglePause()">Ⅱ Pause</button>
+      <button onclick="changeSpeed()">1× Speed</button>
+      <button onclick="nextStop()">Next Stop →</button>
+      <button onclick="resetTrip()">↺ Reset Trip</button>
+      <button onclick="enableNotifications()">🔔 Arrival Alerts</button>
+      <span class="control-note" id="simulationStatus">
+        Route simulation ready
+      </span>
+    </div>
+
+  </section>
+
+  <div class="section-heading" id="itinerary">
+    <div>
+      <h2>Live Stop-by-Stop Itinerary & Platforms</h2>
+      <p id="itineraryDescription">
+        Route stops, scheduled times, and demonstration arrival estimates.
+      </p>
+    </div>
+    <span class="badge" id="stopCount">Total Stops: 0</span>
+  </div>
+
+  <section class="panel itinerary">
+    <div class="itinerary-header">
+      <div>
+        <strong id="itineraryRoute">Hassan → Bengaluru</strong>
+        <p>Times are sample timetable values for this demonstration.</p>
+      </div>
+      <div>
+        <span class="yellow">●</span> Current bus stop
+      </div>
+    </div>
+
+    <div id="stopList"></div>
+  </section>
+
+  <div class="section-heading" id="fleet">
+    <div>
+      <h2>Fleet & Bus Classes</h2>
+      <p>Choose a demonstration route to explore the tracking interface.</p>
+    </div>
+  </div>
+
+  <section class="panel bus-card">
+    <div class="quick-buses">
+      <button onclick="quickBus('KA-09-F-5421','hassan')">Airavat Club Class</button>
+      <button onclick="quickBus('KA-19-F-3312','mangaluru')">Ambaari Utsav</button>
+      <button onclick="quickBus('KA-01-F-8841','mysuru')">Flybus</button>
+      <button onclick="quickBus('KA-25-F-7744','hubballi')">Rajahamsa</button>
+      <button onclick="quickBus('KA-07-F-2289','tirupati')">Karnataka Sarige</button>
+      <button onclick="quickBus('KA-14-F-1130','shivamogga')">Express</button>
+    </div>
+  </section>
+
+  <div class="section-heading" id="support">
+    <div>
+      <h2>Passenger Support</h2>
+      <p>Use official KSRTC channels to verify services and schedules.</p>
+    </div>
+  </div>
+
+  <section class="panel bus-card">
+    <p style="line-height:2;col
